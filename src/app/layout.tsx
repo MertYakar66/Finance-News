@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import { Nav } from "@/components/nav";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "FinanceNews - AI Financial News Platform",
+  title: "YAKAR TERMINAL",
   description:
-    "Local-first financial news aggregator with AI-powered analysis via Ollama",
+    "Bloomberg-style financial terminal combining news aggregation, options engine, and AI agent",
 };
 
 export default function RootLayout({
@@ -15,10 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">
-        <Nav />
-        <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
-      </body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

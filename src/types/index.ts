@@ -119,3 +119,72 @@ export interface RSSFeedConfig {
   url: string;
   publisher: string;
 }
+
+// ─── Terminal Types ───────────────────────────────────────────────────
+
+export interface MarketIndex {
+  symbol: string;
+  name: string;
+  price: number;
+  changePct: number;
+  change: number;
+}
+
+// ─── Options Engine Types (smart-wheel-engine) ────────────────────────
+
+export interface WheelTrade {
+  ticker: string;
+  strategy: "short_put" | "covered_call";
+  strike: number;
+  expiration: string;
+  premium: number;
+  probability: number;
+  expectedPnL: number;
+  maxLoss: number;
+  iv: number;
+  delta: number;
+  score: number;
+}
+
+export interface MarketRegime {
+  regime: "BULL" | "BEAR" | "NEUTRAL" | "HIGH_VOL";
+  vix: number;
+  trendScore: number;
+  confidence: number;
+}
+
+export interface OptionsPortfolio {
+  openPositions: number;
+  totalPremiumCollected: number;
+  winRate: number;
+  avgDaysHeld: number;
+}
+
+// ─── Local Agent Types ────────────────────────────────────────────────
+
+export interface AgentTask {
+  id: string;
+  description: string;
+  status: "queued" | "running" | "completed" | "failed";
+  startedAt?: string;
+  completedAt?: string;
+}
+
+export interface AgentStatus {
+  online: boolean;
+  model: string;
+  vramUsage: number;
+  vramTotal: number;
+  ramUsage: number;
+  activeTabs: number;
+  tasksCompleted: number;
+  uptime: string;
+}
+
+// ─── Terminal Command Types ───────────────────────────────────────────
+
+export interface TerminalCommand {
+  command: string;
+  description: string;
+  action: string;
+}

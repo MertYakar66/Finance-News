@@ -170,6 +170,9 @@ export default function TerminalPage() {
   // Ollama status
   const [ollamaStatus, setOllamaStatus] = useState<"connected" | "disconnected" | "checking">("checking");
 
+  // Retrieval providers
+  const [retrievalProviders, setRetrievalProviders] = useState<string[]>(["rss"]);
+
   // Command history
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
 
@@ -327,6 +330,22 @@ export default function TerminalPage() {
       case "CLEAR":
         setCommandHistory([]);
         break;
+      case "STORY":
+        if (arg) {
+          // Open story by index (1-based)
+          const idx = parseInt(arg) - 1;
+          if (stories[idx]) {
+            window.open(`/story/${stories[idx].storyId}`, "_blank");
+          }
+        } else if (selectedStory) {
+          window.open(`/story/${selectedStory.storyId}`, "_blank");
+        }
+        break;
+      case "IMPACT":
+        if (selectedStory) {
+          setChatQuery(`Explain the market impact of: "${selectedStory.canonicalTitle}". Who is exposed? What mechanism drives the impact? Over what time horizon?`);
+        }
+        break;
       case "HELP":
         // Help is shown via the command line component
         break;
@@ -358,6 +377,7 @@ export default function TerminalPage() {
         alertCount={alertCount}
         ollamaStatus={ollamaStatus}
         agentStatus={PLACEHOLDER_AGENT_STATUS.online ? "online" : "offline"}
+        retrievalProviders={retrievalProviders}
       />
 
       {/* Main Grid */}

@@ -37,6 +37,30 @@ export interface MacroData {
   data: MacroDataPoint[];
 }
 
+// ─── Impact & Exposure Types ──────────────────────────────────────────
+
+export type ImpactFactor = "rates" | "oil" | "fx" | "regulation" | "earnings" | "demand" | "supply_chain" | "geopolitical" | "monetary_policy" | "labor";
+
+export type ImpactHorizon = "intraday" | "days" | "weeks" | "quarters";
+
+export type StoryStatus = "developing" | "evolving" | "resolved";
+
+export type Sentiment = "positive" | "negative" | "neutral" | "mixed";
+
+export interface ExposureMechanism {
+  factor: ImpactFactor;
+  direction: "positive" | "negative" | "uncertain";
+  confidence: number;
+  description?: string;
+}
+
+export interface UserExposure {
+  id: number;
+  exposureType: "ticker" | "sector" | "factor" | "country" | "theme";
+  exposureValue: string;
+  weight: number;
+}
+
 // ─── Story Types ───────────────────────────────────────────────────────
 
 export interface StoryCard {
@@ -49,10 +73,33 @@ export interface StoryCard {
   createdAt: string;
   entities: EntityTag[];
   sources: SourceRef[];
+  // Story Graph Intelligence fields
+  impactTags?: ImpactFactor[];
+  exposureMechanisms?: ExposureMechanism[];
+  impactHorizon?: ImpactHorizon | null;
+  storyStatus?: StoryStatus;
+  contradictionFlag?: boolean;
+  whyItMatters?: string | null;
+  corroborationScore?: number;
+  exposureRelevance?: number;
+}
+
+export interface StoryDetail extends StoryCard {
+  timeline: StoryTimelineEvent[];
+  allSources: SourceRefDetailed[];
+  relatedStories: StoryCard[];
+}
+
+export interface StoryTimelineEvent {
+  id: number;
+  eventType: "created" | "source_added" | "merged" | "status_change" | "contradiction_detected";
+  description: string;
+  metadata?: Record<string, unknown>;
+  occurredAt: string;
 }
 
 export interface EntityTag {
-  entityType: "ticker" | "person" | "org" | "topic";
+  entityType: "ticker" | "person" | "org" | "topic" | "factor";
   entityValue: string;
 }
 
@@ -60,6 +107,16 @@ export interface SourceRef {
   publisher: string;
   url: string;
   headline: string;
+}
+
+export interface SourceRefDetailed extends SourceRef {
+  sourceId: string;
+  publishedAt: string | null;
+  snippet: string | null;
+  sentiment: Sentiment | null;
+  geography: string | null;
+  rightsRestricted: boolean;
+  retrievalProvider: string;
 }
 
 // ─── Event Types ───────────────────────────────────────────────────────
@@ -110,6 +167,62 @@ export interface DataProvider {
     filingType: string
   ): Promise<FilingSummary | null>;
   fetchMacroData(series: string): Promise<MacroData | null>;
+}
+
+// ─── Retrieval Provider Interface ──────────────────────────────────────
+
+export interface RetrievalResult {
+  url: string;
+  title: string;
+  snippet: string;
+  publisher: string;
+  publishedAt: string;
+  relevanceScore: number;
+  rightsRestricted: boolean;
+  geography?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface RetrievalQuery {
+  query: string;
+  domain?: "news" | "filings" | "research" | "market" | "all";
+  filters?: {
+    tickers?: string[];
+    sectors?: string[];
+    dateFrom?: string;
+    dateTo?: string;
+    publishers?: string[];
+    countries?: string[];
+  };
+  limit?: number;
+}
+
+export interface RetrievalProvider {
+  name: string;
+  search(query: RetrievalQuery): Promise<RetrievalResult[]>;
+  isAvailable(): Promise<boolean>;
+}
+
+// ─── Code Execution Types ──────────────────────────────────────────────
+
+export interface CodeExecutionRequest {
+  code: string;
+  language: "python";
+  timeout?: number;
+}
+
+export interface CodeExecutionResult {
+  success: boolean;
+  output: string;
+  error?: string;
+  artifacts?: ExecutionArtifact[];
+  executionTime: number;
+}
+
+export interface ExecutionArtifact {
+  type: "chart" | "table" | "csv" | "json";
+  name: string;
+  data: string;
 }
 
 // ─── RSS Feed Config ───────────────────────────────────────────────────

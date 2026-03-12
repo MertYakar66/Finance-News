@@ -21,6 +21,19 @@ function timeAgo(dateStr: string): string {
   return `${days}d`;
 }
 
+const FACTOR_COLORS: Record<string, string> = {
+  rates: "text-blue-400",
+  oil: "text-amber-400",
+  fx: "text-purple-400",
+  regulation: "text-red-400",
+  earnings: "text-green-400",
+  demand: "text-cyan-400",
+  supply_chain: "text-orange-400",
+  geopolitical: "text-rose-400",
+  monetary_policy: "text-indigo-400",
+  labor: "text-teal-400",
+};
+
 export function NewsPanel({
   stories,
   loading,
@@ -30,8 +43,8 @@ export function NewsPanel({
 }: NewsPanelProps) {
   return (
     <TerminalPanel
-      title="News Feed"
-      tag="RSS"
+      title="Story Intelligence"
+      tag="GRAPH"
       headerRight={
         <button
           onClick={onRefresh}
@@ -58,10 +71,11 @@ export function NewsPanel({
         </div>
       ) : (
         <div className="space-y-1">
-          {stories.map((story, i) => {
+          {stories.map((story) => {
             const tickers = story.entities
               .filter((e) => e.entityType === "ticker")
               .map((e) => e.entityValue);
+            const impactTags = story.impactTags || [];
 
             return (
               <button
@@ -70,18 +84,29 @@ export function NewsPanel({
                 className="block w-full text-left hover:bg-terminal-border/30 px-1 py-0.5 transition-colors"
               >
                 <div className="flex items-start gap-1">
-                  <span className="mt-[2px] text-terminal-amber">●</span>
+                  <span className={`mt-[2px] ${
+                    story.contradictionFlag ? "text-terminal-red" :
+                    story.storyStatus === "evolving" ? "text-terminal-amber" :
+                    "text-terminal-green"
+                  }`}>
+                    {story.contradictionFlag ? "▲" : story.storyStatus === "evolving" ? "◆" : "●"}
+                  </span>
                   <div className="flex-1 min-w-0">
                     <div className="truncate text-terminal-text">
                       {story.canonicalTitle}
                     </div>
-                    <div className="flex items-center gap-2 text-[10px]">
+                    <div className="flex items-center gap-2 text-[10px] flex-wrap">
                       {tickers.slice(0, 3).map((t) => (
                         <span key={t} className="text-terminal-blue">
                           ${t}
                         </span>
                       ))}
-                      {story.sector && (
+                      {impactTags.slice(0, 2).map((tag) => (
+                        <span key={tag} className={FACTOR_COLORS[tag] || "text-terminal-dim"}>
+                          [{tag.replace("_", " ")}]
+                        </span>
+                      ))}
+                      {story.sector && !impactTags.length && (
                         <span className="text-terminal-dim">
                           [{story.sector}]
                         </span>
@@ -92,6 +117,16 @@ export function NewsPanel({
                       {story.sourceCount > 1 && (
                         <TerminalBadge variant="default">
                           {story.sourceCount} src
+                        </TerminalBadge>
+                      )}
+                      {story.corroborationScore !== undefined && story.corroborationScore > 0.5 && (
+                        <TerminalBadge variant="green">
+                          ✓
+                        </TerminalBadge>
+                      )}
+                      {story.exposureRelevance !== undefined && story.exposureRelevance > 0 && (
+                        <TerminalBadge variant="blue">
+                          ★{story.exposureRelevance.toFixed(0)}
                         </TerminalBadge>
                       )}
                     </div>

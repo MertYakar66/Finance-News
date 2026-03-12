@@ -7,6 +7,7 @@ interface StatusBarProps {
   alertCount: number;
   ollamaStatus: "connected" | "disconnected" | "checking";
   agentStatus: "online" | "offline";
+  retrievalProviders?: string[];
 }
 
 export function StatusBar({
@@ -14,6 +15,7 @@ export function StatusBar({
   alertCount,
   ollamaStatus,
   agentStatus,
+  retrievalProviders,
 }: StatusBarProps) {
   const [time, setTime] = useState("");
 
@@ -72,6 +74,14 @@ export function StatusBar({
 
       {/* Right: Status indicators */}
       <div className="flex items-center gap-4">
+        {retrievalProviders && retrievalProviders.length > 0 && (
+          <span className="flex items-center gap-1">
+            <span className="text-terminal-dim">DATA:</span>
+            <span className="text-terminal-green">
+              {retrievalProviders.join("+")}
+            </span>
+          </span>
+        )}
         <span className="flex items-center gap-1">
           <span className="text-terminal-dim">OLLAMA:</span>
           <span

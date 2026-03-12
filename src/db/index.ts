@@ -31,7 +31,15 @@ function initDb(): BetterSQLite3Database<typeof schema> {
       sector TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
-      source_count INTEGER DEFAULT 1
+      source_count INTEGER DEFAULT 1,
+      impact_tags TEXT,
+      exposure_mechanisms TEXT,
+      impact_horizon TEXT,
+      story_status TEXT DEFAULT 'developing',
+      contradiction_flag INTEGER DEFAULT 0,
+      first_seen_at TEXT,
+      why_it_matters TEXT,
+      corroboration_score REAL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS story_sources (
@@ -41,7 +49,11 @@ function initDb(): BetterSQLite3Database<typeof schema> {
       publisher TEXT,
       headline TEXT NOT NULL,
       published_at TEXT,
-      snippet TEXT
+      snippet TEXT,
+      retrieval_provider TEXT DEFAULT 'rss',
+      rights_restricted INTEGER DEFAULT 0,
+      sentiment TEXT,
+      geography TEXT
     );
 
     CREATE TABLE IF NOT EXISTS story_entities (
@@ -49,6 +61,23 @@ function initDb(): BetterSQLite3Database<typeof schema> {
       story_id TEXT REFERENCES stories(story_id),
       entity_type TEXT NOT NULL,
       entity_value TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS story_timeline (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      story_id TEXT REFERENCES stories(story_id),
+      event_type TEXT NOT NULL,
+      description TEXT NOT NULL,
+      metadata TEXT,
+      occurred_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS user_exposures (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      exposure_type TEXT NOT NULL,
+      exposure_value TEXT NOT NULL,
+      weight REAL DEFAULT 1,
+      added_at TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS market_snapshots (
@@ -101,10 +130,36 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     CREATE INDEX IF NOT EXISTS idx_story_sources_story ON story_sources(story_id);
     CREATE INDEX IF NOT EXISTS idx_story_entities_story ON story_entities(story_id);
     CREATE INDEX IF NOT EXISTS idx_story_entities_value ON story_entities(entity_value);
+    CREATE INDEX IF NOT EXISTS idx_story_timeline_story ON story_timeline(story_id);
+    CREATE INDEX IF NOT EXISTS idx_user_exposures_type ON user_exposures(exposure_type);
     CREATE INDEX IF NOT EXISTS idx_market_snapshots_ticker ON market_snapshots(ticker);
     CREATE INDEX IF NOT EXISTS idx_alerts_ticker ON alerts(ticker);
     CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id);
   `);
+
+  // Migrations for existing databases: add new columns safely
+  const migrations = [
+    "ALTER TABLE stories ADD COLUMN impact_tags TEXT",
+    "ALTER TABLE stories ADD COLUMN exposure_mechanisms TEXT",
+    "ALTER TABLE stories ADD COLUMN impact_horizon TEXT",
+    "ALTER TABLE stories ADD COLUMN story_status TEXT DEFAULT 'developing'",
+    "ALTER TABLE stories ADD COLUMN contradiction_flag INTEGER DEFAULT 0",
+    "ALTER TABLE stories ADD COLUMN first_seen_at TEXT",
+    "ALTER TABLE stories ADD COLUMN why_it_matters TEXT",
+    "ALTER TABLE stories ADD COLUMN corroboration_score REAL DEFAULT 0",
+    "ALTER TABLE story_sources ADD COLUMN retrieval_provider TEXT DEFAULT 'rss'",
+    "ALTER TABLE story_sources ADD COLUMN rights_restricted INTEGER DEFAULT 0",
+    "ALTER TABLE story_sources ADD COLUMN sentiment TEXT",
+    "ALTER TABLE story_sources ADD COLUMN geography TEXT",
+  ];
+
+  for (const migration of migrations) {
+    try {
+      sqlite.exec(migration);
+    } catch {
+      // Column already exists — safe to ignore
+    }
+  }
 
   _db = drizzle(sqlite, { schema });
   return _db;

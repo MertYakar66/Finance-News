@@ -80,6 +80,55 @@ function initDb(): BetterSQLite3Database<typeof schema> {
       added_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS news_categories (
+      category_id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT,
+      query_keywords TEXT NOT NULL,
+      query_entities TEXT,
+      query_tickers TEXT,
+      query_sectors TEXT,
+      query_countries TEXT,
+      icon TEXT,
+      color TEXT,
+      sort_order INTEGER DEFAULT 0,
+      enabled INTEGER DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS story_categories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      story_id TEXT REFERENCES stories(story_id),
+      category_id TEXT REFERENCES news_categories(category_id),
+      match_score REAL DEFAULT 0,
+      matched_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS ingestion_runs (
+      run_id TEXT PRIMARY KEY,
+      run_type TEXT NOT NULL,
+      started_at TEXT NOT NULL,
+      completed_at TEXT,
+      headlines_ingested INTEGER DEFAULT 0,
+      stories_clustered INTEGER DEFAULT 0,
+      impact_analyzed INTEGER DEFAULT 0,
+      categories_matched INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'running',
+      error TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS briefings (
+      briefing_id TEXT PRIMARY KEY,
+      briefing_type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      story_ids TEXT NOT NULL,
+      generated_at TEXT NOT NULL,
+      period_start TEXT NOT NULL,
+      period_end TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS market_snapshots (
       snapshot_id TEXT PRIMARY KEY,
       ticker TEXT NOT NULL,
@@ -132,6 +181,10 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     CREATE INDEX IF NOT EXISTS idx_story_entities_value ON story_entities(entity_value);
     CREATE INDEX IF NOT EXISTS idx_story_timeline_story ON story_timeline(story_id);
     CREATE INDEX IF NOT EXISTS idx_user_exposures_type ON user_exposures(exposure_type);
+    CREATE INDEX IF NOT EXISTS idx_story_categories_story ON story_categories(story_id);
+    CREATE INDEX IF NOT EXISTS idx_story_categories_cat ON story_categories(category_id);
+    CREATE INDEX IF NOT EXISTS idx_ingestion_runs_type ON ingestion_runs(run_type);
+    CREATE INDEX IF NOT EXISTS idx_briefings_type ON briefings(briefing_type);
     CREATE INDEX IF NOT EXISTS idx_market_snapshots_ticker ON market_snapshots(ticker);
     CREATE INDEX IF NOT EXISTS idx_alerts_ticker ON alerts(ticker);
     CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id);
